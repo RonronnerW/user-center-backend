@@ -62,7 +62,7 @@ public class UserController {
         return ResultUtils.success(user);
     }
 
-    @PostMapping("logout")
+    @PostMapping("/logout")
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
         if (request == null) {
             throw new BaseException(ErrorCode.NULL_ERROR);
@@ -110,7 +110,7 @@ public class UserController {
      * @param request
      * @return
      */
-    @GetMapping("current")
+    @GetMapping("/current")
     public BaseResponse<User> current(HttpServletRequest request) {
 
         User user = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
