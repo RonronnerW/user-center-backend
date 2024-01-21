@@ -27,7 +27,7 @@ import static com.wang.usercenter.content.UserContent.USER_LOGIN_STATE;
  */
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = {"http://localhost:8080","http:http://121.41.226.62:8080","http://localhost:80","http:http://121.41.226.62:80"},allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:80","http://121.41.226.62:80"},allowCredentials = "true")
 public class UserController {
     @Autowired
     private UserService userService;
