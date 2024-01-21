@@ -6,9 +6,9 @@ spring:
       password: 123456
       driver-class-name: com.mysql.cj.jdbc.Driver
 
-  graphql:
-    cors:
-      allowed-origins:
-        - "http://121.41.226.62:80"
-        - "http://localhost:80"
+#  graphql:
+#    cors:
+#      allowed-origins:
+#        - "http://121.41.226.62:80"
+#        - "http://localhost:80"
 
