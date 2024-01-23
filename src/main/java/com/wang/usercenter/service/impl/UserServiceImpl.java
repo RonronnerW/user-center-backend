@@ -1,10 +1,12 @@
 package com.wang.usercenter.service.impl;
 import java.net.http.HttpRequest;
-import java.util.Date;
+import java.util.*;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.wang.usercenter.common.ErrorCode;
 import com.wang.usercenter.domain.User;
 import com.wang.usercenter.exception.BaseException;
@@ -16,10 +18,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.wang.usercenter.content.UserContent.USER_LOGIN_STATE;
 
@@ -128,12 +132,65 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         newUser.setPhone(user.getPhone());
         newUser.setCreateTime(user.getCreateTime());
         newUser.setPlanetCode(user.getPlanetCode());
+        newUser.setTags(user.getTags());
         return newUser;
     }
 
     @Override
     public void userLogout(HttpServletRequest request) {
         request.getSession().removeAttribute(USER_LOGIN_STATE);
+    }
+
+    /**
+     * sql 查询
+     * @param tagList
+     * @return
+     */
+    @Deprecated
+    public List<User> searchByTagsBySQL(List<String> tagList) {
+        if(CollectionUtils.isEmpty(tagList)) {
+            throw new BaseException(ErrorCode.NULL_ERROR);
+        }
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        for (String tag : tagList) {
+            wrapper = wrapper.like("tags", tag);
+        }
+        List<User> list = this.list(wrapper);
+        return list.stream().map(this::getSafetyUser).collect(Collectors.toList());
+    }
+
+    /**
+     * 内存查询 - 查询所有用户在内存中判断
+     * @param tagNameList
+     * @return
+     */
+    @Override
+    public List<User> searchByTags(List<String> tagNameList){
+        if (CollectionUtils.isEmpty(tagNameList)){
+            throw new BaseException(ErrorCode.PARAMS_ERROR);
+        }
+        //1.先查询所有用户
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        List<User> userList = this.list(queryWrapper);
+        Gson gson = new Gson();
+        //2.判断内存中是否包含要求的标签 parallelStream()
+        //https://blog.csdn.net/weixin_44227650/article/details/123047880?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522166787335916782414989165%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=166787335916782414989165&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~baidu_landing_v2~default-1-123047880-null-null.142^v63^control,201^v3^control_2,213^v1^t3_esquery_v2&utm_term=parallelStream%28%29&spm=1018.2226.3001.4187
+        return userList.stream().filter(user -> {
+            String tagstr = user.getTags();
+//            if (StringUtils.isBlank(tagstr)){
+//                return false;
+//            }
+            Set<String> tempTagNameSet =  gson.fromJson(tagstr,new TypeToken<Set<String>>(){}.getType());
+            //java8  Optional 来判断空
+            tempTagNameSet = Optional.ofNullable(tempTagNameSet).orElse(new HashSet<>());
+
+            for (String tagName : tagNameList){
+                if (!tempTagNameSet.contains(tagName)){
+                    return false;
+                }
+            }
+            return true;
+        }).map(this::getSafetyUser).collect(Collectors.toList());
     }
 }
 

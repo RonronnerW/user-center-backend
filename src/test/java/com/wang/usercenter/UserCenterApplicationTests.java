@@ -1,4 +1,6 @@
 package com.wang.usercenter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 import com.wang.usercenter.domain.User;
@@ -92,6 +94,21 @@ class UserCenterApplicationTests {
         l = userService.userRegister(userCount, userPwd, checkPwd,planetCode);
         Assertions.assertEquals(-1, l);
 
-
+    }
+    @Test
+    void TestTags() {
+        List<String> list = Arrays.asList("java");
+        List<User> users = userService.searchByTags(list);
+        for (User user : users) {
+            System.out.println(user);
+        };
+    }
+    @Test
+    void TestTagsBySQL() {
+        List<String> list = Arrays.asList("java");
+        List<User> users = userService.searchByTagsBySQL(list);
+        for (User user : users) {
+            System.out.println(user);
+        };
     }
 }

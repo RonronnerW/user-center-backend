@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.net.http.HttpRequest;
+import java.util.List;
 
 /**
 * @author wlbin
@@ -43,4 +44,18 @@ public interface UserService extends IService<User> {
      * @param request
      */
     public void userLogout(HttpServletRequest request);
+
+    /**
+     * 根据标签查找用户 内存
+     * @param tagList
+     * @return
+     */
+    public List<User> searchByTags(List<String> tagList);
+
+    /**
+     * 根据标签查找用户 sql
+     * @param tagList
+     * @return
+     */
+    public List<User> searchByTagsBySQL(List<String> tagList);
 }
