@@ -15,8 +15,7 @@ create table t_user
     is_delete   tinyint  default 0                 not null comment '删除标记',
     role        int                                null comment '用户角色 0-普通用户 1- 管理员',
     planet_code varchar(10)                        null comment 'xing',
-    tags        varchar(1024)                      null comment '标签 json 列表'
+    tags        varchar(1024)                      null comment '标签 json 列表',
+    profile     varchar(512)                       null comment '个人简介'
 )
     comment '用户表';
-
-

@@ -12,6 +12,7 @@ import com.wang.usercenter.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.http.HttpRequest;
@@ -27,6 +28,7 @@ import static com.wang.usercenter.content.UserContent.USER_LOGIN_STATE;
  */
 @RestController
 @RequestMapping("/user")
+@CrossOrigin(origins = "http:localhost:3000", allowCredentials = "true")
 public class UserController {
     @Autowired
     private UserService userService;
@@ -121,5 +123,21 @@ public class UserController {
         User us = userService.getById(id);
         User safetyUser = userService.getSafetyUser(us);
         return ResultUtils.success(safetyUser);
+    }
+    @GetMapping("/tags")
+    public BaseResponse<List<User>> searchByTags(@RequestParam(required = false) List<String> tags) {
+        if(CollectionUtils.isEmpty(tags)) {
+            return ResultUtils.set(ErrorCode.PARAMS_ERROR);
+        }
+        List<User> users = userService.searchByTags(tags);
+        return ResultUtils.success(users);
+    }
+    @PostMapping("/update")
+    public BaseResponse<Integer> updateUser(@RequestBody User user, HttpServletRequest request) {
+        if(user==null) {
+            throw new BaseException(ErrorCode.PARAMS_ERROR);
+        }
+        int count = userService.update(user,request);
+        return ResultUtils.success(count);
     }
 }

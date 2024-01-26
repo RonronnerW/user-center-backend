@@ -1,10 +1,16 @@
 # 连接池配置
 spring:
   datasource:
-      url: jdbc:mysql://121.41.226.62:3306/user_center
-      username: root
+    url: jdbc:mysql://121.41.226.62:3306/user_center
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      port: 6379
+      host: 121.41.226.62
+      database: 0
       password: 123456
-      driver-class-name: com.mysql.cj.jdbc.Driver
 
 #  graphql:
 #    cors:

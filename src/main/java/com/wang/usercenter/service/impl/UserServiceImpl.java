@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.wang.usercenter.content.UserContent.ADMIN_ROLE;
 import static com.wang.usercenter.content.UserContent.USER_LOGIN_STATE;
 
 /**
@@ -37,6 +38,9 @@ import static com.wang.usercenter.content.UserContent.USER_LOGIN_STATE;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService{
     private static final String SALT  = "wang";
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     public long userRegister(String userAccount, String userPwd, String checkPwd, String planetCode) {
@@ -113,7 +117,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 用户脱敏
         User newUser = getSafetyUser(user);
-        //记录登录状态
+        //记录登录状态 现在使用redis
         request.getSession().setAttribute(USER_LOGIN_STATE, newUser);
 
         return newUser;
@@ -133,6 +137,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         newUser.setCreateTime(user.getCreateTime());
         newUser.setPlanetCode(user.getPlanetCode());
         newUser.setTags(user.getTags());
+        newUser.setProfile(user.getProfile());
         return newUser;
     }
 
@@ -158,6 +163,53 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         List<User> list = this.list(wrapper);
         return list.stream().map(this::getSafetyUser).collect(Collectors.toList());
     }
+
+    @Override
+    public int update(User user, HttpServletRequest request) {
+        if(user==null || request == null) {
+            throw new BaseException(ErrorCode.PARAMS_ERROR);
+        }
+        // 鉴权
+        User currentUser = getCurrentUser(request);
+        if(!isAdmin(currentUser) && currentUser.getId() != user.getId()) {
+            throw new BaseException(ErrorCode.NO_AUTH);
+        }
+        User selectById = userMapper.selectById(user.getId());
+        if(selectById == null) {
+            throw new BaseException(ErrorCode.NULL_ERROR);
+        }
+        return userMapper.updateById(user);
+    }
+
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        if (request == null) {
+            throw new BaseException(ErrorCode.PARAMS_ERROR);
+        }
+        User user = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
+        return user == null || user.getRole() != ADMIN_ROLE;
+    }
+
+    @Override
+    public boolean isAdmin(User loginUser) {
+        if(loginUser==null) {
+            throw new BaseException(ErrorCode.NULL_ERROR);
+        }
+        return loginUser.getRole() == ADMIN_ROLE;
+    }
+
+    @Override
+    public User getCurrentUser(HttpServletRequest request) {
+        if(request == null) {
+            throw new BaseException(ErrorCode.PARAMS_ERROR);
+        }
+        User user = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
+        if(user == null) {
+            throw new BaseException(ErrorCode.NOT_LOGIN);
+        }
+        return user;
+    }
+
 
     /**
      * 内存查询 - 查询所有用户在内存中判断
