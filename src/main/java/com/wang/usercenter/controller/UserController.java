@@ -1,6 +1,7 @@
 package com.wang.usercenter.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wang.usercenter.common.BaseResponse;
 import com.wang.usercenter.common.ErrorCode;
 import com.wang.usercenter.common.ResultUtils;
@@ -88,6 +89,17 @@ public class UserController {
         List<User> ret = list.stream().map(user1 -> {
             return userService.getSafetyUser(user1);
         }).collect(Collectors.toList());
+        return ResultUtils.success(ret);
+
+    }
+    @GetMapping("/recommend")
+    public BaseResponse<Page<User>> userRecommendList(long pageNum, long pageSize, HttpServletRequest request) {
+
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        Page<User> page = userService.page(new Page<>(pageNum, pageSize), wrapper);
+        List<User> collect = page.getRecords().stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
+        Page<User> ret = page.setRecords(collect);
+
         return ResultUtils.success(ret);
 
     }
