@@ -13,6 +13,9 @@ server:
 spring:
   profiles:
     active: dev
+  session:
+    timeout: 86400
+
 
 mybatis-plus:
   configuration:

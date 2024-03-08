@@ -11,13 +11,18 @@ import com.wang.usercenter.domain.request.RegisterRequest;
 import com.wang.usercenter.exception.BaseException;
 import com.wang.usercenter.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.http.HttpRequest;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.wang.usercenter.content.UserContent.ADMIN_ROLE;
@@ -30,6 +35,7 @@ import static com.wang.usercenter.content.UserContent.USER_LOGIN_STATE;
 @RestController
 @RequestMapping("/user")
 @CrossOrigin(origins = "http:localhost:3000", allowCredentials = "true")
+@Slf4j
 public class UserController {
     @Autowired
     private UserService userService;
@@ -92,14 +98,10 @@ public class UserController {
         return ResultUtils.success(ret);
 
     }
+
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> userRecommendList(long pageNum, long pageSize, HttpServletRequest request) {
-
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        Page<User> page = userService.page(new Page<>(pageNum, pageSize), wrapper);
-        List<User> collect = page.getRecords().stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
-        Page<User> ret = page.setRecords(collect);
-
+        Page<User> ret = userService.getRecommendList(pageNum, pageSize, request);
         return ResultUtils.success(ret);
 
     }

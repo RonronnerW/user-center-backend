@@ -1,6 +1,7 @@
 package com.wang.usercenter.service;
 
 import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wang.usercenter.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -87,6 +88,8 @@ public interface UserService extends IService<User> {
      * @return
      */
     User getCurrentUser(HttpServletRequest request);
+
+    Page<User> getRecommendList(long pageNum, long pageSize, HttpServletRequest request);
 
     /**
      * 更新用户信息

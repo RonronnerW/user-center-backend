@@ -4,10 +4,12 @@ import java.util.*;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.wang.usercenter.common.ErrorCode;
+import com.wang.usercenter.common.ResultUtils;
 import com.wang.usercenter.domain.User;
 import com.wang.usercenter.exception.BaseException;
 import com.wang.usercenter.service.UserService;
@@ -17,10 +19,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -41,6 +46,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Override
     public long userRegister(String userAccount, String userPwd, String checkPwd, String planetCode) {
@@ -117,9 +125,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 用户脱敏
         User newUser = getSafetyUser(user);
-        //记录登录状态 现在使用redis
+        //记录登录状态 现在使用redis 自动保存到redis
         request.getSession().setAttribute(USER_LOGIN_STATE, newUser);
-
         return newUser;
     }
     public User getSafetyUser(User user) {
@@ -204,10 +211,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BaseException(ErrorCode.PARAMS_ERROR);
         }
         User user = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
+
         if(user == null) {
             throw new BaseException(ErrorCode.NOT_LOGIN);
         }
         return user;
+    }
+
+    @Override
+    public Page<User> getRecommendList(long pageNum, long pageSize, HttpServletRequest request) {
+        User loginUser = getCurrentUser(request);
+        String redisKey = String.format("user_center:user:recommend:"+loginUser.getId());
+        ValueOperations valueOperations = redisTemplate.opsForValue();
+        Page<User> pageUser = (Page<User>)valueOperations.get(redisKey);
+        if(pageUser!=null) {
+            return pageUser;
+        }
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        Page<User> userPage = userMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+        List<User> collect = userPage.getRecords().stream().map(this::getSafetyUser).collect(Collectors.toList());
+        Page<User> ret = userPage.setRecords(collect);
+        try {
+            valueOperations.set(redisKey, ret, 30000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.info("/user/recommend redis set error", e);
+        }
+        return ret;
     }
 
 
