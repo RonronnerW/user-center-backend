@@ -8,6 +8,7 @@ import com.wang.usercenter.common.ResultUtils;
 import com.wang.usercenter.domain.User;
 import com.wang.usercenter.domain.request.LoginRequest;
 import com.wang.usercenter.domain.request.RegisterRequest;
+import com.wang.usercenter.domain.response.UserResponse;
 import com.wang.usercenter.exception.BaseException;
 import com.wang.usercenter.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -153,5 +154,14 @@ public class UserController {
         }
         int count = userService.update(user,request);
         return ResultUtils.success(count);
+    }
+    @GetMapping("/match")
+    public BaseResponse<List<User>> matchUsers(Long num, HttpServletRequest request) {
+        if(num<=0 || num>20) {
+            throw new BaseException(ErrorCode.PARAMS_ERROR, "匹配数量不支持");
+        }
+        User loginUser = userService.getCurrentUser(request);
+        List<User> users = userService.matchUsers(num, loginUser);
+        return ResultUtils.success(users);
     }
 }

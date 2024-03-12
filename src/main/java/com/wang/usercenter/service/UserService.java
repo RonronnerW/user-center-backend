@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wang.usercenter.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.wang.usercenter.domain.response.UserResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -90,6 +91,8 @@ public interface UserService extends IService<User> {
     User getCurrentUser(HttpServletRequest request);
 
     Page<User> getRecommendList(long pageNum, long pageSize, HttpServletRequest request);
+
+    List<User> matchUsers(Long num, User loginUser);
 
     /**
      * 更新用户信息
